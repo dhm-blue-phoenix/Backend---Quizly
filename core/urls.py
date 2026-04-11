@@ -19,7 +19,7 @@ from django.urls import path, include
 
 api = [
     path('', include('app_auth.api.urls')),
-    #path('', include('app_quiz_manager.api.urls')),
+    path('', include('app_quiz_manager.api.urls')),
 ]
 
 urlpatterns = [

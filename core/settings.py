@@ -47,7 +47,7 @@ INSTALLED_APPS = [
 
     # Apps
     'app_auth',
-    # 'app_quiz_manager'
+    'app_quiz_manager',
 ]
 
 MIDDLEWARE = [
@@ -77,10 +77,26 @@ SIMPLE_JWT = {
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
 }
 
+CORS_ALLOW_CREDENTIALS = True
+
 CORS_ALLOWED_ORIGINS = [
+    'http://blue-dev-fedora:5500',
     'http://127.0.0.1:5500',
     'http://localhost:5500',
+    'http://localhost:4200',
+    'http://127.0.0.1:4200',
 ]
+
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:4200',
+    'http://127.0.0.1:4200',
+]
+
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Lax'
+
+# SESSION_COOKIE_SECURE = False
+# CSRF_COOKIE_SECURE = False
 
 ROOT_URLCONF = 'core.urls'
 
