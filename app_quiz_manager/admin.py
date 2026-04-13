@@ -9,5 +9,5 @@ class QuizAdmin(admin.ModelAdmin):
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
-    list_display = ('quiz', 'text', 'correct_answer')
-    search_fields = ('text',)
+    list_display = ('quiz', 'question_title', 'correct_answer')
+    search_fields = ('question_title',)

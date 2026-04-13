@@ -12,7 +12,7 @@ class Quiz(models.Model):
     description = models.CharField(max_length=150)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    url = models.URLField(max_length=500, null=True, blank=True)
+    video_url = models.URLField(max_length=500, null=True, blank=True)
 
     def __str__(self):
         return self.title
@@ -22,7 +22,7 @@ class Question(models.Model):
     Model representing a question belonging to a quiz.
     """
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='questions')
-    text = models.TextField()
+    question_title = models.TextField()
     option_a = models.CharField(max_length=255)
     option_b = models.CharField(max_length=255)
     option_c = models.CharField(max_length=255)

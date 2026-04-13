@@ -39,31 +39,37 @@ def generate_quiz_json(transcript: str) -> dict:
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key: raise ValueError("GEMINI_API_KEY must be set")
     client = genai.Client(api_key=api_key, http_options={'api_version': 'v1beta'})
-    p = ("Based on the transcript, generate a 10-question quiz JSON. "
-         "Schema: title, description, questions (text, options [list of 4], correct_answer). "
-         f"Transcript: {transcript}")
+    prompt = (
+        "Based on the transcript, generate a 10-question quiz JSON. "
+        "Each question must have exactly 4 options. "
+        "Schema: title, description, questions (question_title, question_options [list of 4], answer). "
+        f"Transcript: {transcript}"
+    )
     cfg = {'response_mime_type': 'application/json'}
-    resp = client.models.generate_content(model='gemini-2.5-flash', contents=p, config=cfg)
+    resp = client.models.generate_content(model='gemini-2.0-flash', contents=prompt, config=cfg)
     return json.loads(resp.text)
 
-def save_quiz_to_db(data: dict, user, url: str) -> Quiz:
+def _create_questions(quiz: Quiz, questions_data: list):
+    """Helper to create questions for a quiz."""
+    for q in questions_data:
+        opts = q.get('question_options', q.get('options', [])) + [""] * 4
+        Question.objects.create(
+            quiz=quiz, question_title=q.get('question_title', q.get('text', '')),
+            option_a=opts[0], option_b=opts[1], option_c=opts[2], option_d=opts[3],
+            correct_answer=q.get('answer', q.get('correct_answer', ''))
+        )
+
+def save_quiz_to_db(data: dict, user, video_url: str) -> Quiz:
     """Saves quiz data and questions to the database."""
     quiz = Quiz.objects.create(
         user=user, title=data.get('title', 'Untitled')[:150],
-        description=data.get('description', '')[:150], url=url
+        description=data.get('description', '')[:150], video_url=video_url
     )
-    qs = data.get('questions', [])
-    for q in qs:
-        opts = q.get('options', []) + [""] * 4
-        Question.objects.create(
-            quiz=quiz, text=q.get('text', q.get('question', '')),
-            option_a=opts[0], option_b=opts[1], option_c=opts[2], option_d=opts[3],
-            correct_answer=q.get('correct_answer', '')
-        )
+    _create_questions(quiz, data.get('questions', []))
     return quiz
 
 def run_quiz_generation_pipeline(url: str, user) -> Quiz:
-    """Orchestrates quiz generation with detailed step-by-step logging."""
+    """Orchestrates quiz generation with modular steps."""
     v_id, t_file = extract_video_id(url), f"/tmp/{uuid.uuid4()}.m4a"
     n_url = f"https://www.youtube.com/watch?v={v_id}"
     try:

@@ -1,10 +1,10 @@
-import os
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
 from django.contrib.auth import get_user_model
+from rest_framework.exceptions import ValidationError
 from app_quiz_manager.models import Quiz, Question
 
 User = get_user_model()
@@ -37,9 +37,9 @@ class QuizEndpointTests(TestCase):
             "description": "Mocked description",
             "questions": [
                 {
-                    "text": "What is 2+2?",
-                    "options": ["1", "2", "3", "4"],
-                    "correct_answer": "4"
+                    "question_title": "What is 2+2?",
+                    "question_options": ["1", "2", "3", "4"],
+                    "answer": "4"
                 }
             ]
         }
@@ -53,9 +53,10 @@ class QuizEndpointTests(TestCase):
         self.assertEqual(response.data['title'], "Mocked Quiz Title")
         self.assertEqual(response.data['video_url'], data['url'])
         self.assertIn('questions', response.data)
-        self.assertEqual(response.data['questions'][0]['question_title'], "What is 2+2?")
-        self.assertEqual(response.data['questions'][0]['question_options'], ["1", "2", "3", "4"])
-        self.assertEqual(response.data['questions'][0]['answer'], "4")
+        q0 = response.data['questions'][0]
+        self.assertEqual(q0['question_title'], "What is 2+2?")
+        self.assertEqual(q0['question_options'], ["1", "2", "3", "4"])
+        self.assertEqual(q0['answer'], "4")
         self.assertTrue(Quiz.objects.filter(user=self.user, title="Mocked Quiz Title").exists())
         self.assertTrue(Question.objects.filter(quiz__title="Mocked Quiz Title").exists())
         
@@ -67,11 +68,10 @@ class QuizEndpointTests(TestCase):
         import yt_dlp
         self.client.force_authenticate(user=self.user)
         url = reverse('quiz-list')
-        
         data = {'url': 'https://www.youtube.com/watch?v=invalid_id1'}
         
         with patch('app_quiz_manager.api.functions.download_audio') as mock_download:
-            mock_download.side_effect = yt_dlp.utils.DownloadError('Simulated error')
+            mock_download.side_effect = ValidationError({'url': 'Invalid YouTube URL or video unavailable'})
             response = self.client.post(url, data, format='json')
             
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

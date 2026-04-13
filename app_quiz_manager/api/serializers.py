@@ -3,7 +3,6 @@ from ..models import Quiz, Question
 from .functions import run_quiz_generation_pipeline
 
 class QuestionSerializer(serializers.ModelSerializer):
-    question_title = serializers.CharField(source='text')
     question_options = serializers.SerializerMethodField()
     answer = serializers.CharField(source='correct_answer')
 
@@ -15,12 +14,14 @@ class QuestionSerializer(serializers.ModelSerializer):
         return [obj.option_a, obj.option_b, obj.option_c, obj.option_d]
 
 class QuizSerializer(serializers.ModelSerializer):
-    video_url = serializers.URLField(source='url')
     questions = QuestionSerializer(many=True, read_only=True)
 
     class Meta:
         model = Quiz
-        fields = ['id', 'title', 'description', 'created_at', 'updated_at', 'video_url', 'questions']
+        fields = [
+            'id', 'title', 'description', 'created_at', 'updated_at', 
+            'video_url', 'questions'
+        ]
         read_only_fields = ['created_at', 'updated_at']
 
 class QuizCreateSerializer(serializers.Serializer):
