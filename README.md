@@ -1,195 +1,115 @@
-# CODERR API Backend
+# Quizly Backend - Generative AI Quiz Platform
 
-Welcome to the backend of the CODERR platform! This Django-based API provides the server logic for a freelance marketplace application. It allows managing users, business profiles, service offers, orders, and reviews through RESTful endpoints.
+Quizly is a powerful Django-based REST API that uses state-of-the-art AI to generate interactive quizzes from YouTube videos. By leveraging **yt-dlp** for audio extraction, **OpenAI Whisper** for transcription, and **Google Gemini 2.0 Flash** for quiz generation, Quizly provides a seamless experience for creating educational content.
 
-## Requirements
+---
 
-**Python:** 3.10+ (the project requires Python 3.10 or higher for local development).
+## Features
 
-Check your Python version:
+- **Automated Quiz Generation**: Enter a YouTube URL and get a 10-question quiz in seconds.
+- **Secure Authentication**: JWT-based authentication using **HttpOnly Cookies** (`access_token` and `refresh_token`) for maximum security.
+- **AI-Powered**: Uses Google's latest Gemini 2.0 Flash model for high-quality question generation.
+- **Clean Architecture**: Strictly separated business logic in `functions.py` and response logic in `views.py`.
+- **Full Documentation Alignment**: Built to match the internal Quizly API specification.
 
-```bash
-python --version
-```
+---
 
-## Quick Start
+## Prerequisites
 
-1. Clone the repository and navigate to the folder:
+Before setting up the project, ensure you have the following installed:
 
+- **Python 3.12+**
+- **FFMPEG**: This is **REQUIRED** for Whisper AI and yt-dlp to process audio data.
+  - *Linux*: `sudo apt install ffmpeg`
+  - *macOS*: `brew install ffmpeg`
+  - *Windows*: Download from [ffmpeg.org](https://ffmpeg.org/download.html) and add to your PATH.
+
+---
+
+## Installation & Setup
+
+1. **Clone the repository**:
    ```bash
-   git clone https://github.com/dhm-blue-phoenix/Backend---Coderr.git
-   cd Backend---Coderr
+   git clone <repository-url>
+   cd Backend---Quizly
    ```
 
-## Manual Setup
-
-2. Create and activate a virtual environment:
-
+2. **Create and activate a virtual environment**:
    ```bash
    python -m venv .venv
+   source .venv/bin/activate  # macOS/Linux
+   # .venv\Scripts\activate   # Windows
    ```
 
-   ### On Windows
-
-   ```bash
-   .venv\Scripts\activate
-   ```
-
-   ### On macOS and Linux
-
-   ```bash
-   source .venv/bin/activate
-   ```
-
-3. Install dependencies:
-
+3. **Install dependencies**:
    ```bash
    pip install -r requirements.txt
    ```
 
-4. Create a `.env` file in the root directory of the project:
-
-   ```
-   SECRET_KEY=your-secret-key-here
+4. **Environment Variables**:
+   Create a `.env` file in the root directory and add your credentials:
+   ```env
+   SECRET_KEY=your_django_secret_key
    DEBUG=True
+   GEMINI_API_KEY=your_google_gemini_api_key
    ```
 
-   > **Note:** Never commit your `.env` file to version control. It is listed in `.gitignore` by default.
-
-5. Apply migrations and create the database (SQLite is used for local development):
-
+5. **Run Migrations**:
    ```bash
    python manage.py makemigrations
    python manage.py migrate
    ```
 
 6. Create a superuser for admin access (optional):
-
    This allows you to access the Django admin interface at `/admin/`.
-
    ```bash
    python manage.py createsuperuser
    ```
 
-7. Run the development server:
-
+7. **Start the Development Server**:
    ```bash
    python manage.py runserver
    ```
 
-   The API will be available at `http://127.0.0.1:8000/`.
+---
 
-## API Endpoints
+## API Usage
 
-### Authentication
+The main endpoints for quiz management are available under `/api/quizzes/`.
 
-- `POST /api/registration/` - Register a new user (customer or business)
-- `POST /api/login/` - Authenticate and receive a token
+### Create a Quiz
+**POST** `/api/quizzes/`
+```json
+{
+  "url": "https://www.youtube.com/watch?v=example"
+}
+```
 
-### Profiles
+### List Your Quizzes
+**GET** `/api/quizzes/`
 
-- `GET /api/profile/{id}/` - Get a user's profile details
-- `PATCH /api/profile/{id}/` - Update own profile
-- `GET /api/profiles/business/` - List all business users
-- `GET /api/profiles/customer/` - List all customer users
+### Get Quiz Details
+**GET** `/api/quizzes/{id}/`
 
-### Offers
+---
 
-- `GET /api/offers/` - List all available offers (with filters, search, and pagination)
-- `POST /api/offers/` - Create a new offer (business users only)
-- `GET /api/offers/{id}/` - Get offer details
-- `PATCH /api/offers/{id}/` - Update an offer (owner only)
-- `DELETE /api/offers/{id}/` - Delete an offer (owner only)
-- `GET /api/offerdetails/{id}/` - Get specific offer detail tier
+## Testing
 
-### Orders
+The project comes with a comprehensive suite of **38 tests** covering both authentication and quiz management.
 
-- `GET /api/orders/` - List orders (for customer or business)
-- `POST /api/orders/` - Create a new order (customer only)
-- `PATCH /api/orders/{id}/` - Update order status (business only)
-- `DELETE /api/orders/{id}/` - Delete an order (admin only)
-- `GET /api/order-count/{business_user_id}/` - Get count of in-progress orders
-- `GET /api/completed-order-count/{business_user_id}/` - Get count of completed orders
-
-### Reviews
-
-- `GET /api/reviews/` - List reviews with filtering and ordering
-- `POST /api/reviews/` - Create a review (customer only, one per business user)
-- `PATCH /api/reviews/{id}/` - Update your review
-- `DELETE /api/reviews/{id}/` - Delete your review
-
-### Platform Info
-
-- `GET /api/base-info/` - Get platform statistics (review count, average rating, business count, offer count)
-
-## Running Tests
-
-To run the automated test suite, execute the following command:
-
+To run the tests:
 ```bash
 python manage.py test
 ```
 
-This will run all tests across the project and display a coverage report (95%+ coverage).
+---
 
-## Project Structure
+## Tech Stack
 
-```
-./
-├── core/                 # Main Django project configuration
-│   ├── settings.py
-│   ├── urls.py
-│   ├── wsgi.py
-│   └── views.py
-├── authentication/       # User registration and login
-│   ├── models.py
-│   ├── api/
-│   │   ├── views.py
-│   │   ├── serializers.py
-│   │   ├── urls.py
-│   │   └── permissions.py
-├── profiles/             # User profiles
-│   ├── models.py
-│   ├── api/
-│   │   ├── views.py
-│   │   ├── serializers.py
-│   │   ├── urls.py
-│   │   └── permissions.py
-├── offers/               # Service offers
-│   ├── models.py
-│   ├── api/
-│   │   ├── views.py
-│   │   ├── serializers.py
-│   │   ├── urls.py
-│   │   ├── permissions.py
-│   │   └── filters.py
-├── orders/               # Order management
-│   ├── models.py
-│   ├── api/
-│   │   ├── views.py
-│   │   ├── serializers.py
-│   │   ├── urls.py
-│   │   └── permissions.py
-├── reviews/              # Review system
-│   ├── models.py
-│   ├── api/
-│   │   ├── views.py
-│   │   ├── serializers.py
-│   │   ├── urls.py
-│   │   └── permissions.py
-├── db.sqlite3            # Local SQLite database
-├── manage.py
-└── requirements.txt
-```
+- **Backend**: Django 6.0, Django REST Framework 3.17
+- **Authentication**: SimpleJWT (Cookie-based)
+- **Audio Processing**: yt-dlp, FFmpeg
+- **Machine Learning**: OpenAI Whisper (Local transcription)
+- **AI Model**: Google Gemini 2.0 Flash (SDK: `google-genai`)
 
-## Authentication
-
-The API uses token-based authentication. After registering or logging in, you receive a token that must be included in all subsequent requests:
-
-## Technologies Used
-
-- **Django 5.2.12** - Web framework
-- **Django REST Framework** - REST API framework
-- **Django Filter** - Filtering for querysets
-- **python-dotenv** - Environment variable management
-- **SQLite** - Database (local development)
+---
