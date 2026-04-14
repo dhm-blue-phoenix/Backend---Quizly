@@ -14,19 +14,19 @@ _model_whisper = None
 
 def extract_video_id(url: str) -> str:
     """Extracts video ID from a YouTube URL."""
-    print(f"[DEBUG] Extracting Video ID from URL: {url}")
+    #print(f"[DEBUG] Extracting Video ID from URL: {url}")
     regex = r"(?:v=|be\/|embed\/|v\/|shorts\/|[?&]v=)([0-9A-Za-z_-]{11})"
     match = re.search(regex, url)
     if not match:
-        print("[ERROR] Invalid YouTube URL")
+        #print("[ERROR] Invalid YouTube URL")
         raise ValidationError({'url': 'Invalid YouTube URL'})
     v_id = match.group(1)
-    print(f"[DEBUG] Found Video ID: {v_id}")
+    #print(f"[DEBUG] Found Video ID: {v_id}")
     return v_id
 
 def download_audio(url: str, tmp_filename: str) -> None:
     """Downloads audio from YouTube using yt-dlp with remote components."""
-    print(f"[DEBUG] Starting audio download for URL: {url}")
+    #print(f"[DEBUG] Starting audio download for URL: {url}")
     ydl_opts = {
         "format": "bestaudio/best", "outtmpl": tmp_filename, "quiet": True, 
         "noplaylist": True, "js_runtimes": {"node": {}},
@@ -35,20 +35,20 @@ def download_audio(url: str, tmp_filename: str) -> None:
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
-        print(f"[DEBUG] Audio downloaded successfully to: {tmp_filename}")
+        #print(f"[DEBUG] Audio downloaded successfully to: {tmp_filename}")
     except Exception as e:
-        print(f"[ERROR] yt-dlp Download failed: {str(e)}")
+        #print(f"[ERROR] yt-dlp Download failed: {str(e)}")
         raise ValidationError({'url': f'Download failed: {str(e)}'})
 
 def transcribe_audio(file_path: str) -> str:
     """Lazy-loads Whisper model and transcribes audio."""
     global _model_whisper
-    print("[DEBUG] Starting Audio Transcription...")
+    #print("[DEBUG] Starting Audio Transcription...")
     if _model_whisper is None: 
-        print("[DEBUG] Loading Whisper 'base' model (first time)...")
+        #print("[DEBUG] Loading Whisper 'base' model (first time)...")
         _model_whisper = whisper.load_model("base")
     result = _model_whisper.transcribe(file_path, fp16=False)["text"]
-    print(f"[DEBUG] Transcription finished. Length: {len(result)} characters.")
+    #print(f"[DEBUG] Transcription finished. Length: {len(result)} characters.")
     return result
 
 def _fetch_gemini_json(transcript: str) -> dict:
@@ -68,21 +68,21 @@ def _fetch_gemini_json(transcript: str) -> dict:
 
 def generate_quiz_json(transcript: str) -> dict:
     """Generates JSON quiz with a 3-attempt retry loop for robustness."""
-    print("[DEBUG] Sending transcript to Gemini API with retry logic...")
+    #print("[DEBUG] Sending transcript to Gemini API with retry logic...")
     for attempt in range(3):
         try:
             data = _fetch_gemini_json(transcript)
-            print("[DEBUG] Gemini API response received successfully.")
+            #print("[DEBUG] Gemini API response received successfully.")
             return data
         except json.JSONDecodeError as de:
             if attempt == 2:
-                print(f"[CRITICAL ERROR] Failed to decode AI JSON after 3 tries.")
+                #print(f"[CRITICAL ERROR] Failed to decode AI JSON after 3 tries.")
                 raise de
-            print(f"[DEBUG] JSON parsing failed, retrying (attempt {attempt+2}/3)...")
+            #print(f"[DEBUG] JSON parsing failed, retrying (attempt {attempt+2}/3)...")
 
 def _create_questions(quiz: Quiz, questions_data: list):
     """Helper to create questions for a quiz."""
-    print(f"[DEBUG] Saving {len(questions_data)} questions to the database...")
+    #print(f"[DEBUG] Saving {len(questions_data)} questions to the database...")
     for q in questions_data:
         opts = q.get('question_options', q.get('options', [])) + [""] * 4
         Question.objects.create(
@@ -97,13 +97,13 @@ def save_quiz_to_db(data, user, video_url: str) -> Quiz:
         if isinstance(data[0], dict) and 'questions' in data[0]: data = data[0]
         else: data = {'title': 'AI Generated Quiz', 'questions': data}
     elif not isinstance(data, dict): data = {'title': 'AI Generated Quiz', 'questions': []}
-    print(f"[DEBUG] Saving Quiz '{data.get('title')}' for user {user.username}...")
+    #print(f"[DEBUG] Saving Quiz '{data.get('title')}' for user {user.username}...")
     quiz = Quiz.objects.create(
         user=user, title=str(data.get('title', 'Untitled'))[:150],
         description=str(data.get('description', ''))[:150], video_url=video_url
     )
     _create_questions(quiz, data.get('questions', []))
-    print("[DEBUG] Quiz and questions saved successfully.")
+    #print("[DEBUG] Quiz and questions saved successfully.")
     return quiz
 
 def run_quiz_generation_pipeline(url: str, user) -> Quiz:
@@ -117,9 +117,9 @@ def run_quiz_generation_pipeline(url: str, user) -> Quiz:
         return save_quiz_to_db(quiz_data, user, url)
     except Exception as e:
         full_error = traceback.format_exc()
-        print(f"[CRITICAL ERROR] Pipeline failed:\n{full_error}")
+        #print(f"[CRITICAL ERROR] Pipeline failed:\n{full_error}")
         raise ValidationError({'url': f'Generation failed: {str(e)}'})
     finally:
         if os.path.exists(t_file): 
             os.remove(t_file)
-            print(f"[DEBUG] Temporary file {t_file} removed.")
+            #print(f"[DEBUG] Temporary file {t_file} removed.")
