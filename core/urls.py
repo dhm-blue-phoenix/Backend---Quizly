@@ -22,7 +22,10 @@ api = [
     path('', include('app_quiz_manager.api.urls')),
 ]
 
+import os
+ADMIN_URL = os.getenv('ADMIN_URL', 'admin/')
+
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path(ADMIN_URL, admin.site.urls),
     path('api/', include(api)),
 ]

@@ -46,8 +46,8 @@ def set_auth_cookies(response, access_token, refresh_token):
     Sets http-only secure cookies for tokens.
     Frontend needs 'credentials: include'.
     """
-    response.set_cookie('access_token', access_token, httponly=True, samesite='Lax')
-    response.set_cookie('refresh_token', refresh_token, httponly=True, samesite='Lax')
+    response.set_cookie('access_token', access_token, httponly=True, samesite='None', secure=True)
+    response.set_cookie('refresh_token', refresh_token, httponly=True, samesite='None', secure=True)
     return response
 
 def delete_auth_cookies(response):

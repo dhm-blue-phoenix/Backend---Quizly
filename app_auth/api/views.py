@@ -71,6 +71,6 @@ def refresh_token_view(request):
         status=status.HTTP_200_OK,
     )
     response.set_cookie(
-        'access_token', new_access, httponly=True, samesite='Lax',
+        'access_token', new_access, httponly=True, samesite='None', secure=True
     )
     return response
